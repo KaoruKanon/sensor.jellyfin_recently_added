@@ -14,16 +14,17 @@ from homeassistant.config_entries import ConfigEntry, ConfigFlowResult
 from homeassistant.core import callback
 from homeassistant.config_entries import ConfigFlow
 from homeassistant.const import (
-    CONF_API_KEY, 
-    CONF_NAME, 
-    CONF_HOST, 
-    CONF_PORT, 
+    CONF_API_KEY,
+    CONF_NAME,
+    CONF_HOST,
+    CONF_PORT,
     CONF_SSL
 )
 
 from .const import (
-    DOMAIN, 
+    DOMAIN,
     DEFAULT_NAME,
+    CONF_USER_ID,
     CONF_MAX,
     CONF_SECTION_TYPES,
     ALL_SECTION_TYPES,
@@ -35,32 +36,33 @@ from .const import (
 )
 
 from .helpers import setup_client
-from .plex_api import (
+from .jellyfin_api import (
     FailedToLogin,
 )
-from .options_flow import PlexOptionFlow
+from .options_flow import JellyfinOptionFlow
 
-PLEX_SCHEMA = vol.Schema({
+JELLYFIN_SCHEMA = vol.Schema({
     vol.Optional(CONF_NAME, default=''): vol.All(str),
     vol.Required(CONF_HOST, default='localhost'): vol.All(str),
-    vol.Required(CONF_PORT, default=32400): vol.All(vol.Coerce(int), vol.Range(min=0)),
+    vol.Required(CONF_PORT, default=8096): vol.All(vol.Coerce(int), vol.Range(min=0)),
     vol.Required(CONF_API_KEY): vol.All(str),
+    vol.Required(CONF_USER_ID): vol.All(str),
     vol.Optional(CONF_SSL, default=False): vol.All(bool),
     vol.Optional(CONF_MAX, default=5): vol.All(vol.Coerce(int), vol.Range(min=0)),
     vol.Optional(CONF_ON_DECK, default=False): vol.All(bool),
-    vol.Optional(CONF_SECTION_TYPES, default={"movie", "show"}): SelectSelector(SelectSelectorConfig(options=ALL_SECTION_TYPES, mode=SelectSelectorMode.DROPDOWN ,multiple=True)),
+    vol.Optional(CONF_SECTION_TYPES, default={"movies", "tvshows"}): SelectSelector(SelectSelectorConfig(options=ALL_SECTION_TYPES, mode=SelectSelectorMode.DROPDOWN ,multiple=True)),
     vol.Optional(CONF_SECTION_LIBRARIES + "_label"): ConstantSelector(ConstantSelectorConfig(value=CONF_SECTION_LIBRARIES_LABEL)),
     vol.Optional(CONF_SECTION_LIBRARIES): TextSelector(TextSelectorConfig(multiple=True, multiline=False)),
     vol.Optional(CONF_EXCLUDE_KEYWORDS + "_label"): ConstantSelector(ConstantSelectorConfig(value=CONF_EXCLUDE_KEYWORDS_LABEL)),
     vol.Optional(CONF_EXCLUDE_KEYWORDS): TextSelector(TextSelectorConfig(multiple=True, multiline=False)),
 })
 
-class PlexConfigFlow(ConfigFlow, domain=DOMAIN):
-    """Config flow for the Plex integration."""
+class JellyfinConfigFlow(ConfigFlow, domain=DOMAIN):
+    """Config flow for the Jellyfin integration."""
     @staticmethod
     @callback
-    def async_get_options_flow(config_entry: ConfigEntry) -> PlexOptionFlow:
-        return PlexOptionFlow(config_entry)
+    def async_get_options_flow(config_entry: ConfigEntry) -> JellyfinOptionFlow:
+        return JellyfinOptionFlow(config_entry)
 
     async def async_step_user(
         self, user_input: dict[str, Any] | None = None
@@ -75,6 +77,7 @@ class PlexConfigFlow(ConfigFlow, domain=DOMAIN):
                     user_input[CONF_NAME],
                     user_input[CONF_SSL],
                     user_input[CONF_API_KEY],
+                    user_input[CONF_USER_ID],
                     user_input[CONF_MAX],
                     user_input[CONF_ON_DECK],
                     user_input[CONF_HOST],
@@ -88,7 +91,7 @@ class PlexConfigFlow(ConfigFlow, domain=DOMAIN):
             else:
                 return self.async_create_entry(title=user_input[CONF_NAME] if len(user_input[CONF_NAME]) > 0 else DEFAULT_NAME, data=user_input)
 
-        schema = self.add_suggested_values_to_schema(PLEX_SCHEMA, user_input)
+        schema = self.add_suggested_values_to_schema(JELLYFIN_SCHEMA, user_input)
         return self.async_show_form(step_id="user", data_schema=schema, errors=errors)
 
     async def async_step_reconfigure(
@@ -105,6 +108,7 @@ class PlexConfigFlow(ConfigFlow, domain=DOMAIN):
                     user_input[CONF_NAME],
                     user_input[CONF_SSL],
                     user_input[CONF_API_KEY],
+                    user_input[CONF_USER_ID],
                     user_input[CONF_MAX],
                     user_input[CONF_ON_DECK],
                     user_input[CONF_HOST],
@@ -122,5 +126,5 @@ class PlexConfigFlow(ConfigFlow, domain=DOMAIN):
                     reason="reconfigure_successful"
                 )
 
-        schema = self.add_suggested_values_to_schema(PLEX_SCHEMA, entry.data)
+        schema = self.add_suggested_values_to_schema(JELLYFIN_SCHEMA, entry.data)
         return self.async_show_form(step_id="reconfigure", data_schema=schema, errors=errors)

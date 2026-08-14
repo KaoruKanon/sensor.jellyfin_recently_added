@@ -19,8 +19,8 @@ jobs:
       - name: Create ZIP file
         run: |
           mkdir -p output
-          cd custom_components/plex_recently_added
-          zip -r ../../output/plex_recently_added.zip ./*
+          cd custom_components/jellyfin_recently_added
+          zip -r ../../output/jellyfin_recently_added.zip ./*
 
       - name: Check if release exists
         id: check_release
@@ -49,6 +49,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url || format('https://uploads.github.com/repos/{0}/releases/{1}/assets{{?name}}', github.repository, env.release_id) }}
-          asset_path: ./output/plex_recently_added.zip
-          asset_name: plex_recently_added.zip
+          asset_path: ./output/jellyfin_recently_added.zip
+          asset_name: jellyfin_recently_added.zip
           asset_content_type: application/zip

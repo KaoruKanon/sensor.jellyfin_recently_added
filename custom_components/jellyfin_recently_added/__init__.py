@@ -4,15 +4,15 @@ from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ConfigEntryNotReady
 from homeassistant.const import (
     CONF_NAME,
-    CONF_API_KEY, 
-    CONF_HOST, 
+    CONF_API_KEY,
+    CONF_HOST,
     CONF_PORT,
     CONF_SSL
 )
 
 from .const import (
-    DOMAIN, 
-    CONF_TOKEN,
+    DOMAIN,
+    CONF_USER_ID,
     CONF_MAX,
     CONF_SECTION_TYPES,
     CONF_SECTION_LIBRARIES,
@@ -20,9 +20,9 @@ from .const import (
     CONF_ON_DECK
 )
 
-from .coordinator import PlexDataCoordinator
+from .coordinator import JellyfinDataCoordinator
 from .helpers import setup_client
-from .plex_api import (
+from .jellyfin_api import (
     FailedToLogin,
 )
 from .redirect import ImagesRedirect
@@ -38,6 +38,7 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> b
             config_entry.data[CONF_NAME],
             config_entry.data[CONF_SSL],
             config_entry.data[CONF_API_KEY],
+            config_entry.data[CONF_USER_ID],
             config_entry.data[CONF_MAX],
             config_entry.data[CONF_ON_DECK],
             config_entry.data[CONF_HOST],
@@ -48,7 +49,7 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> b
         )
     except FailedToLogin as err:
         raise ConfigEntryNotReady("Failed to Log-in") from err
-    coordinator = PlexDataCoordinator(hass, client)
+    coordinator = JellyfinDataCoordinator(hass, client)
 
     hass.http.register_view(ImagesRedirect(hass, config_entry))
     await coordinator.async_config_entry_first_refresh()
@@ -60,7 +61,7 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> b
     return True
 
 async def async_unload_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> bool:
-    """Unload Plex config entry."""
+    """Unload Jellyfin config entry."""
     if unload_ok := await hass.config_entries.async_unload_platforms(
         config_entry, PLATFORMS
     ):

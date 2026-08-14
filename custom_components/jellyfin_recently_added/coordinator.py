@@ -7,15 +7,15 @@ from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ConfigEntryError
 
 from .const import DOMAIN, POLL_INTERVAL_MINUTES
-from .plex_api import (
-    PlexApi,
+from .jellyfin_api import (
+    JellyfinApi,
     FailedToLogin,
 )
 
 _LOGGER = logging.getLogger(__name__)
 
-class PlexDataCoordinator(DataUpdateCoordinator[Dict[str, Any]]):
-    def __init__(self, hass: HomeAssistant, client: PlexApi):
+class JellyfinDataCoordinator(DataUpdateCoordinator[Dict[str, Any]]):
+    def __init__(self, hass: HomeAssistant, client: JellyfinApi):
         self._client = client
 
         super().__init__(
@@ -25,7 +25,7 @@ class PlexDataCoordinator(DataUpdateCoordinator[Dict[str, Any]]):
             update_method=self._async_update_data,
             update_interval=timedelta(minutes=POLL_INTERVAL_MINUTES),
         )
-    
+
     async def _async_update_data(self) -> Dict[str, Any]:
         try:
             return await self._client.update()

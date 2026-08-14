@@ -1,6 +1,6 @@
 {
-    "filename": "plex_recently_added.zip",
-    "name": "Plex Recently Added",
+    "filename": "jellyfin_recently_added.zip",
+    "name": "Jellyfin Recently Added",
     "content_in_root": false,
     "zip_release": true
 }

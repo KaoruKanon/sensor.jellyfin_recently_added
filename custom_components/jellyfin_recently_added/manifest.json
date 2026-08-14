@@ -1,0 +1,13 @@
+{
+  "domain": "jellyfin_recently_added",
+  "name": "Jellyfin Recently Added",
+  "after_dependencies": ["http"],
+  "codeowners": ["@kaorukanon"],
+  "config_flow": true,
+  "dependencies": [],
+  "documentation": "https://github.com/kaorukanon/sensor.jellyfin_recently_added",
+  "iot_class": "local_polling",
+  "issue_tracker": "https://github.com/kaorukanon/sensor.jellyfin_recently_added/issues",
+  "requirements": [],
+  "version": "0.1.0"
+}

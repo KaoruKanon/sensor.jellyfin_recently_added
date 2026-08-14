@@ -1,11 +1,12 @@
 from homeassistant.core import HomeAssistant
-from .plex_api import PlexApi
+from .jellyfin_api import JellyfinApi
 
 async def setup_client(
     hass: HomeAssistant,
     name: str,
     ssl: bool,
-    token: str,
+    api_key: str,
+    user_id: str,
     max: int,
     on_deck: bool,
     host: str,
@@ -14,7 +15,7 @@ async def setup_client(
     section_libraries: list,
     exclude_keywords: list,
 ):
-    client = PlexApi(hass, name, ssl, token, max, on_deck, host, port, section_types, section_libraries, exclude_keywords)
+    client = JellyfinApi(hass, name, ssl, api_key, user_id, max, on_deck, host, port, section_types, section_libraries, exclude_keywords)
 
     await client.update()
     return client

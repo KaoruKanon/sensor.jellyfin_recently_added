@@ -1,0 +1,64 @@
+{
+    "config": {
+      "step": {
+        "user": {
+          "data": {
+            "name": "Name",
+            "host": "Full DNS name",
+            "port": "Jellyfin port",
+            "api_key": "Jellyfin API key",
+            "user_id": "Jellyfin User ID",
+            "ssl": "SSL",
+            "max": "Max number of items in sensor",
+            "on_deck": "Show \"continue watching\" items",
+            "section_types": "Which section types to consider",
+            "exclude_keywords": "Keyword to be exclude from the sensor",
+            "section_libraries": "Which libraries to consider"
+          }
+        },
+        "reconfigure": {
+          "title": "Reconfigure Jellyfin Recently Added",
+          "description": "Update your Jellyfin server connection settings",
+          "data": {
+            "name": "Name",
+            "host": "Full DNS name",
+            "port": "Jellyfin port",
+            "api_key": "Jellyfin API key",
+            "user_id": "Jellyfin User ID",
+            "ssl": "SSL",
+            "max": "Max number of items in sensor",
+            "on_deck": "Show \"continue watching\" items",
+            "section_types": "Which section types to consider",
+            "exclude_keywords": "Keyword to be exclude from the sensor",
+            "section_libraries": "Which libraries to consider"
+          }
+        }
+      },
+      "error": {
+        "failed_to_login": "Failed to Log-in",
+        "cannot_be_reached": "Jellyfin cannot be reached"
+      },
+      "abort": {
+        "already_configured": "User is already configured (check README)",
+        "failed_to_login": "Failed to Log-in",
+        "cannot_be_reached": "Jellyfin cannot be reached",
+        "reconfigure_successful": "Reconfiguration successful"
+      }
+    },
+    "options": {
+      "step": {
+        "init": {
+          "data": {
+            "max": "Max number of items in sensor",
+            "section_types": "Which section types to consider",
+            "exclude_keywords": "Keyword to be exclude from the sensor",
+            "section_libraries": "Which libraries to consider",
+            "on_deck": "Show \"continue watching\" items"
+        }
+        }
+      },
+      "abort": {
+        "integration_not_loaded": "Integration is not loaded. Please reload the integration and try again."
+      }
+    }
+  }
