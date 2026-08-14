@@ -1,4 +1,7 @@
-from homeassistant.config_entries import ConfigEntry
+import voluptuous as vol
+
+import homeassistant.helpers.config_validation as cv
+from homeassistant.config_entries import ConfigEntry, SOURCE_IMPORT
 from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ConfigEntryNotReady
@@ -12,6 +15,7 @@ from homeassistant.const import (
 
 from .const import (
     DOMAIN,
+    ALL_SECTION_TYPES,
     CONF_USER_ID,
     CONF_MAX,
     CONF_SECTION_TYPES,
@@ -30,6 +34,44 @@ from .redirect import ImagesRedirect
 PLATFORMS = [
     Platform.SENSOR
 ]
+
+# Optional configuration.yaml entry point, kept alongside the UI config flow.
+# Any block found here is imported into a config entry on startup, so the two
+# setup methods (UI and YAML/secrets.yaml) can be used interchangeably.
+JELLYFIN_YAML_SCHEMA = vol.Schema({
+    vol.Optional(CONF_NAME, default=''): cv.string,
+    vol.Required(CONF_HOST): cv.string,
+    vol.Optional(CONF_PORT, default=8096): cv.port,
+    vol.Required(CONF_API_KEY): cv.string,
+    vol.Required(CONF_USER_ID): cv.string,
+    vol.Optional(CONF_SSL, default=False): cv.boolean,
+    vol.Optional(CONF_MAX, default=5): vol.All(vol.Coerce(int), vol.Range(min=0)),
+    vol.Optional(CONF_ON_DECK, default=False): cv.boolean,
+    vol.Optional(CONF_SECTION_TYPES, default=["movies", "tvshows"]): vol.All(cv.ensure_list, [vol.In(ALL_SECTION_TYPES)]),
+    vol.Optional(CONF_SECTION_LIBRARIES, default=[]): vol.All(cv.ensure_list, [cv.string]),
+    vol.Optional(CONF_EXCLUDE_KEYWORDS, default=[]): vol.All(cv.ensure_list, [cv.string]),
+})
+
+CONFIG_SCHEMA = vol.Schema(
+    {DOMAIN: vol.All(cv.ensure_list, [JELLYFIN_YAML_SCHEMA])},
+    extra=vol.ALLOW_EXTRA,
+)
+
+async def async_setup(hass: HomeAssistant, config: dict) -> bool:
+    """Import any jellyfin_recently_added entries found in configuration.yaml."""
+    if DOMAIN not in config:
+        return True
+
+    for entry_config in config[DOMAIN]:
+        hass.async_create_task(
+            hass.config_entries.flow.async_init(
+                DOMAIN,
+                context={"source": SOURCE_IMPORT},
+                data=entry_config,
+            )
+        )
+
+    return True
 
 async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> bool:
     try:

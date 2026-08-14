@@ -16,10 +16,65 @@ Read through these two resources before posting issues to GitHub or the forums.
 4. **You will need to restart after installation for the component to start working.**
 
 ### Before you start: getting your Jellyfin API key and User ID
-- **API key**: In Jellyfin, go to *Administration > Dashboard > Advanced > API Keys* and create a new key.
-- **User ID**: In Jellyfin, go to *Administration > Dashboard > Users*, select the user whose libraries you want to read, and copy the `userId` value from the page URL.
+- **API key**: In Jellyfin, go to *Administration > Dashboard > Advanced > API Keys* and create a new key. This authenticates the request, it does not by itself say whose library/watch-state to read.
+- **User ID**: In Jellyfin, go to *Administration > Dashboard > Users*, select the user whose libraries you want to read (usually your own account), and copy the `userId` value from the page URL. This is required even when the API key belongs to an admin account: "recently added" respects per-user library access, and "continue watching" (`on_deck`) is inherently tied to one user's playback history — Jellyfin has no server-wide equivalent of either. The User ID is not a secret, it's just an identifier, but you can still keep it in `secrets.yaml` alongside the API key if you'd rather have all the sensitive-looking values in one place.
 
 ### Adding device
+You can set this integration up either through the UI, or through `configuration.yaml` — both work, and can be used interchangeably.
+
+<details><summary style="list-style: none"><h3><b style="cursor: pointer">Option A: configuration.yaml + secrets.yaml</b></h3></summary>
+
+Add your API key (and any other value you'd rather not have in plain text) to `secrets.yaml`:
+
+```yaml
+# secrets.yaml
+jellyfin_api_key: "0123456789abcdef0123456789abcdef"
+jellyfin_user_id: "0123456789abcdef0123456789abcdef"
+```
+
+Then reference it from `configuration.yaml`:
+
+```yaml
+# configuration.yaml
+jellyfin_recently_added:
+  - host: jellyfin.local
+    port: 8096
+    ssl: false
+    api_key: !secret jellyfin_api_key
+    user_id: !secret jellyfin_user_id
+    max: 5
+    on_deck: false
+    section_types:
+      - movies
+      - tvshows
+    # section_libraries: []       # optional, defaults to all matching libraries
+    # exclude_keywords: []        # optional
+```
+
+`configuration.yaml` accepts a list under `jellyfin_recently_added:`, so you can declare more than one server. On every Home Assistant restart, each block is imported into a config entry; an entry previously imported this way (matched by `api_key`) is refreshed with the current YAML values rather than duplicated, so `configuration.yaml`/`secrets.yaml` stays the source of truth for entries set up this way. Entries added through the UI are left untouched. You'll still need to restart Home Assistant after adding or editing a block for the change to take effect.
+
+#### `configuration.yaml` reference
+
+Each item in the `jellyfin_recently_added:` list accepts the same values as the UI form:
+
+| Key                 | Required | Type          | Default                | Description                                                                                                   |
+| -------------------- | -------- | ------------- | ----------------------- | --------------------------------------------------------------------------------------------------------------- |
+| `host`               | Yes      | string        | —                        | Jellyfin server hostname or IP.                                                                                  |
+| `api_key`            | Yes      | string        | —                        | Jellyfin API key (*Dashboard > API Keys*).                                                                       |
+| `user_id`            | Yes      | string        | —                        | Jellyfin User ID whose library access and watch-state to use — see [above](#before-you-start-getting-your-jellyfin-api-key-and-user-id). |
+| `port`               | No       | integer       | `8096`                   | Jellyfin server port.                                                                                            |
+| `ssl`                | No       | boolean       | `false`                  | Use `https` to reach the server.                                                                                 |
+| `name`               | No       | string        | `''`                     | Prefix added to entity names/`unique_id` — set this if you're configuring more than one Jellyfin server.        |
+| `max`                | No       | integer       | `5`                      | Max number of items kept per sensor.                                                                            |
+| `on_deck`            | No       | boolean       | `false`                  | Show "continue watching" items instead of "recently added".                                                     |
+| `section_types`      | No       | list of string | `[movies, tvshows]`     | Which library types to expose, any of: `movies`, `tvshows`, `music`, `photos`.                                  |
+| `section_libraries`  | No       | list of string | `[]` (all matching)     | Restrict to specific library names (must match the names shown in Jellyfin exactly). Leave empty for all libraries matching `section_types`. |
+| `exclude_keywords`   | No       | list of string | `[]`                     | Reserved for a future title-filtering feature; accepted for schema/UI parity but not currently applied.        |
+
+</details>
+
+<details><summary style="list-style: none"><h3><b style="cursor: pointer">Option B: UI (My button)</b></h3></summary>
+
 To add the **Jellyfin Recently added** integration to your Home Assistant, use this My button:
 
 <a href="https://my.home-assistant.io/redirect/config_flow_start?domain=jellyfin_recently_added" class="my badge" target="_blank"><img src="https://my.home-assistant.io/badges/config_flow_start.svg"></a>
@@ -37,6 +92,8 @@ If the above My button doesn’t work, you can also perform the following steps 
 - From the list, select **Jellyfin Recently added**.
 
 - Follow the instructions on screen to complete the setup.
+</details>
+
 </details>
 
 The number of items in the sensor, library types, libraries in general, excluded words, and show "continue watching" options can be changed later.

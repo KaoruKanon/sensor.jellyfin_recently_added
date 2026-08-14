@@ -1,4 +1,5 @@
 from typing import Any
+import logging
 import voluptuous as vol
 
 from homeassistant.helpers.selector import (
@@ -40,6 +41,8 @@ from .jellyfin_api import (
     FailedToLogin,
 )
 from .options_flow import JellyfinOptionFlow
+
+_LOGGER = logging.getLogger(__name__)
 
 JELLYFIN_SCHEMA = vol.Schema({
     vol.Optional(CONF_NAME, default=''): vol.All(str),
@@ -128,3 +131,50 @@ class JellyfinConfigFlow(ConfigFlow, domain=DOMAIN):
 
         schema = self.add_suggested_values_to_schema(JELLYFIN_SCHEMA, entry.data)
         return self.async_show_form(step_id="reconfigure", data_schema=schema, errors=errors)
+
+    async def async_step_import(self, import_config: dict[str, Any]) -> ConfigFlowResult:
+        """Handle import of a jellyfin_recently_added block from configuration.yaml.
+
+        Re-runs on every restart, so configuration.yaml (and secrets.yaml)
+        stays the source of truth for entries created this way: an existing
+        entry with the same API key gets its data refreshed instead of
+        being duplicated or ignored.
+        """
+        try:
+            await setup_client(
+                self.hass,
+                import_config[CONF_NAME],
+                import_config[CONF_SSL],
+                import_config[CONF_API_KEY],
+                import_config[CONF_USER_ID],
+                import_config[CONF_MAX],
+                import_config[CONF_ON_DECK],
+                import_config[CONF_HOST],
+                import_config[CONF_PORT],
+                import_config.get(CONF_SECTION_TYPES, []),
+                import_config.get(CONF_SECTION_LIBRARIES, []),
+                import_config.get(CONF_EXCLUDE_KEYWORDS, []),
+            )
+        except FailedToLogin:
+            _LOGGER.error("Failed to log in to Jellyfin while importing configuration.yaml entry")
+            return self.async_abort(reason="failed_to_login")
+
+        existing_entry = next(
+            (
+                entry
+                for entry in self._async_current_entries()
+                if entry.data.get(CONF_API_KEY) == import_config[CONF_API_KEY]
+            ),
+            None,
+        )
+        if existing_entry is not None:
+            return self.async_update_reload_and_abort(
+                existing_entry,
+                data=import_config,
+                reason="already_configured",
+            )
+
+        return self.async_create_entry(
+            title=import_config[CONF_NAME] if len(import_config[CONF_NAME]) > 0 else DEFAULT_NAME,
+            data=import_config,
+        )
