@@ -2,13 +2,21 @@
     "config": {
       "step": {
         "user": {
+          "title": "Connect to Jellyfin",
+          "description": "Step 1 of 2: server connection details.",
           "data": {
             "name": "Name",
             "host": "Full DNS name",
             "port": "Jellyfin port",
             "api_key": "Jellyfin API key",
-            "user_id": "Jellyfin User ID",
-            "ssl": "SSL",
+            "ssl": "SSL"
+          }
+        },
+        "details": {
+          "title": "Jellyfin Recently Added",
+          "description": "Step 2 of 2: pick the account whose libraries and watch-state to use, and how the sensor should behave. If the account list below is empty, your API key isn't allowed to list accounts (needs admin rights) — enter the User ID manually instead.",
+          "data": {
+            "user_id": "Jellyfin account",
             "max": "Max number of items in sensor",
             "on_deck": "Show \"continue watching\" items",
             "section_types": "Which section types to consider",
@@ -24,7 +32,7 @@
             "host": "Full DNS name",
             "port": "Jellyfin port",
             "api_key": "Jellyfin API key",
-            "user_id": "Jellyfin User ID",
+            "user_id": "Jellyfin account",
             "ssl": "SSL",
             "max": "Max number of items in sensor",
             "on_deck": "Show \"continue watching\" items",

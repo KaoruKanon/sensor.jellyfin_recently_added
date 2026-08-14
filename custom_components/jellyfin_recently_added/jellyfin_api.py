@@ -25,6 +25,41 @@ def _get_json(url: str, api_key: str):
     return response.json()
 
 
+def _base_url(ssl: bool, host: str, port: int) -> str:
+    return 'http{0}://{1}:{2}'.format('s' if ssl else '', host, port)
+
+
+async def test_connection(hass: HomeAssistant, ssl: bool, api_key: str, host: str, port: int) -> None:
+    """Confirm the host/api_key pair can reach the Jellyfin server. Raises FailedToLogin otherwise."""
+    try:
+        await hass.async_add_executor_job(
+            functools.partial(_get_json, f'{_base_url(ssl, host, port)}/System/Info', api_key)
+        )
+    except (OSError, ValueError) as e:
+        raise FailedToLogin from e
+
+
+async def list_users(hass: HomeAssistant, ssl: bool, api_key: str, host: str, port: int) -> list[dict]:
+    """Best-effort listing of Jellyfin accounts, for the config flow's user picker.
+
+    Returns an empty list (rather than raising) when the server can't be reached or the
+    API key isn't allowed to list every account (GET /Users requires admin rights) — callers
+    fall back to a manual User ID field in that case instead of failing setup.
+    """
+    try:
+        users = await hass.async_add_executor_job(
+            functools.partial(_get_json, f'{_base_url(ssl, host, port)}/Users', api_key)
+        )
+    except (OSError, ValueError):
+        return []
+
+    return [
+        {"id": user["Id"], "name": user.get("Name") or user["Id"]}
+        for user in users
+        if user.get("Id")
+    ]
+
+
 class JellyfinApi():
     def __init__(
         self,

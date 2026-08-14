@@ -17,7 +17,10 @@ Read through these two resources before posting issues to GitHub or the forums.
 
 ### Before you start: getting your Jellyfin API key and User ID
 - **API key**: In Jellyfin, go to *Administration > Dashboard > Advanced > API Keys* and create a new key. This authenticates the request, it does not by itself say whose library/watch-state to read.
-- **User ID**: In Jellyfin, go to *Administration > Dashboard > Users*, select the user whose libraries you want to read (usually your own account), and copy the `userId` value from the page URL. This is required even when the API key belongs to an admin account: "recently added" respects per-user library access, and "continue watching" (`on_deck`) is inherently tied to one user's playback history — Jellyfin has no server-wide equivalent of either. The User ID is not a secret, it's just an identifier, but you can still keep it in `secrets.yaml` alongside the API key if you'd rather have all the sensitive-looking values in one place.
+- **User ID**: this identifies which Jellyfin account's library access and watch-state to use. It's required even when the API key belongs to an admin account: "recently added" respects per-user library access, and "continue watching" (`on_deck`) is inherently tied to one user's playback history — Jellyfin has no server-wide equivalent of either.
+  - **Via the UI (Option B below)**: no need to look it up — step 2 of the setup wizard shows a dropdown of every account on the server, as long as your API key belongs to an admin account (`GET /Users` requires admin rights to list everyone). If it doesn't, the dropdown is empty and you fall back to the manual entry below.
+  - **Manually (needed for Option A/YAML, or if the dropdown is empty)**: either open *Administration > Dashboard > Users*, select the account, and copy the `userId` value from the page URL, or query the API directly: `curl -H "X-Emby-Token: YOUR_API_KEY" http://jellyfin.local:8096/Users` — the response lists every account with its `Id`, and `Policy.IsAdministrator` / `Policy.EnableAllFolders` to help you spot the admin one.
+  - The User ID is not a secret, it's just an identifier, but you can still keep it in `secrets.yaml` alongside the API key if you'd rather have all the sensitive-looking values in one place.
 
 ### Adding device
 You can set this integration up either through the UI, or through `configuration.yaml` — both work, and can be used interchangeably.
@@ -74,6 +77,8 @@ Each item in the `jellyfin_recently_added:` list accepts the same values as the 
 </details>
 
 <details><summary style="list-style: none"><h3><b style="cursor: pointer">Option B: UI (My button)</b></h3></summary>
+
+The wizard is two steps: server connection first (host/port/SSL/API key), then account and sensor settings — where `user_id` is a dropdown of every Jellyfin account (populated via the API key you just entered) instead of a field you fill in by hand.
 
 To add the **Jellyfin Recently added** integration to your Home Assistant, use this My button:
 
