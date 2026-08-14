@@ -27,6 +27,7 @@ from .const import (
     DOMAIN,
     DEFAULT_NAME,
     CONF_USER_ID,
+    CONF_USER_NAME,
     CONF_MAX,
     CONF_SECTION_TYPES,
     ALL_SECTION_TYPES,
@@ -82,13 +83,20 @@ def _details_schema(users: list[dict]) -> vol.Schema:
     })
 
 
-async def _setup_client_from_data(hass, data: dict) -> None:
-    await setup_client(
+async def _setup_client_from_data(hass, data: dict) -> str:
+    """Validate the given config against Jellyfin, returning the resolved user_id.
+
+    Accepts either data[CONF_USER_ID] or data[CONF_USER_NAME] — the latter is
+    resolved via the API (see jellyfin_api.resolve_user_id), which is how
+    configuration.yaml is allowed to name an account instead of its ID.
+    """
+    _, resolved_user_id = await setup_client(
         hass,
         data[CONF_NAME],
         data[CONF_SSL],
         data[CONF_API_KEY],
-        data[CONF_USER_ID],
+        data.get(CONF_USER_ID),
+        data.get(CONF_USER_NAME),
         data[CONF_MAX],
         data[CONF_ON_DECK],
         data[CONF_HOST],
@@ -97,6 +105,7 @@ async def _setup_client_from_data(hass, data: dict) -> None:
         data.get(CONF_SECTION_LIBRARIES, []),
         data.get(CONF_EXCLUDE_KEYWORDS, []),
     )
+    return resolved_user_id
 
 
 class JellyfinConfigFlow(ConfigFlow, domain=DOMAIN):
@@ -136,7 +145,7 @@ class JellyfinConfigFlow(ConfigFlow, domain=DOMAIN):
         if user_input is not None:
             full_data = {**self._connection_data, **user_input}
             try:
-                await _setup_client_from_data(self.hass, full_data)
+                full_data[CONF_USER_ID] = await _setup_client_from_data(self.hass, full_data)
             except FailedToLogin:
                 errors = {'base': 'failed_to_login'}
             else:
@@ -157,7 +166,7 @@ class JellyfinConfigFlow(ConfigFlow, domain=DOMAIN):
 
         if user_input is not None:
             try:
-                await _setup_client_from_data(self.hass, user_input)
+                user_input[CONF_USER_ID] = await _setup_client_from_data(self.hass, user_input)
             except FailedToLogin:
                 errors = {'base': 'failed_to_login'}
             else:
@@ -181,7 +190,7 @@ class JellyfinConfigFlow(ConfigFlow, domain=DOMAIN):
         being duplicated or ignored.
         """
         try:
-            await _setup_client_from_data(self.hass, import_config)
+            import_config[CONF_USER_ID] = await _setup_client_from_data(self.hass, import_config)
         except FailedToLogin:
             _LOGGER.error("Failed to log in to Jellyfin while importing configuration.yaml entry")
             return self.async_abort(reason="failed_to_login")

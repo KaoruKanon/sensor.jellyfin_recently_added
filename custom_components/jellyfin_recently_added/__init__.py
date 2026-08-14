@@ -17,6 +17,7 @@ from .const import (
     DOMAIN,
     ALL_SECTION_TYPES,
     CONF_USER_ID,
+    CONF_USER_NAME,
     CONF_MAX,
     CONF_SECTION_TYPES,
     CONF_SECTION_LIBRARIES,
@@ -35,22 +36,31 @@ PLATFORMS = [
     Platform.SENSOR
 ]
 
+def _require_user_identifier(value: dict) -> dict:
+    if not value.get(CONF_USER_ID) and not value.get(CONF_USER_NAME):
+        raise vol.Invalid(f"Either '{CONF_USER_ID}' or '{CONF_USER_NAME}' must be set")
+    return value
+
 # Optional configuration.yaml entry point, kept alongside the UI config flow.
 # Any block found here is imported into a config entry on startup, so the two
 # setup methods (UI and YAML/secrets.yaml) can be used interchangeably.
-JELLYFIN_YAML_SCHEMA = vol.Schema({
-    vol.Optional(CONF_NAME, default=''): cv.string,
-    vol.Required(CONF_HOST): cv.string,
-    vol.Optional(CONF_PORT, default=8096): cv.port,
-    vol.Required(CONF_API_KEY): cv.string,
-    vol.Required(CONF_USER_ID): cv.string,
-    vol.Optional(CONF_SSL, default=False): cv.boolean,
-    vol.Optional(CONF_MAX, default=5): vol.All(vol.Coerce(int), vol.Range(min=0)),
-    vol.Optional(CONF_ON_DECK, default=False): cv.boolean,
-    vol.Optional(CONF_SECTION_TYPES, default=["movies", "tvshows"]): vol.All(cv.ensure_list, [vol.In(ALL_SECTION_TYPES)]),
-    vol.Optional(CONF_SECTION_LIBRARIES, default=[]): vol.All(cv.ensure_list, [cv.string]),
-    vol.Optional(CONF_EXCLUDE_KEYWORDS, default=[]): vol.All(cv.ensure_list, [cv.string]),
-})
+JELLYFIN_YAML_SCHEMA = vol.All(
+    vol.Schema({
+        vol.Optional(CONF_NAME, default=''): cv.string,
+        vol.Required(CONF_HOST): cv.string,
+        vol.Optional(CONF_PORT, default=8096): cv.port,
+        vol.Required(CONF_API_KEY): cv.string,
+        vol.Optional(CONF_USER_ID): cv.string,
+        vol.Optional(CONF_USER_NAME): cv.string,
+        vol.Optional(CONF_SSL, default=False): cv.boolean,
+        vol.Optional(CONF_MAX, default=5): vol.All(vol.Coerce(int), vol.Range(min=0)),
+        vol.Optional(CONF_ON_DECK, default=False): cv.boolean,
+        vol.Optional(CONF_SECTION_TYPES, default=["movies", "tvshows"]): vol.All(cv.ensure_list, [vol.In(ALL_SECTION_TYPES)]),
+        vol.Optional(CONF_SECTION_LIBRARIES, default=[]): vol.All(cv.ensure_list, [cv.string]),
+        vol.Optional(CONF_EXCLUDE_KEYWORDS, default=[]): vol.All(cv.ensure_list, [cv.string]),
+    }),
+    _require_user_identifier,
+)
 
 CONFIG_SCHEMA = vol.Schema(
     {DOMAIN: vol.All(cv.ensure_list, [JELLYFIN_YAML_SCHEMA])},
@@ -75,12 +85,13 @@ async def async_setup(hass: HomeAssistant, config: dict) -> bool:
 
 async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> bool:
     try:
-        client = await setup_client(
+        client, _ = await setup_client(
             hass,
             config_entry.data[CONF_NAME],
             config_entry.data[CONF_SSL],
             config_entry.data[CONF_API_KEY],
-            config_entry.data[CONF_USER_ID],
+            config_entry.data.get(CONF_USER_ID),
+            config_entry.data.get(CONF_USER_NAME),
             config_entry.data[CONF_MAX],
             config_entry.data[CONF_ON_DECK],
             config_entry.data[CONF_HOST],

@@ -60,6 +60,30 @@ async def list_users(hass: HomeAssistant, ssl: bool, api_key: str, host: str, po
     ]
 
 
+async def resolve_user_id(hass: HomeAssistant, ssl: bool, api_key: str, host: str, port: int, user_id: str, user_name: str) -> str:
+    """Resolve a configured user_id/user_name pair to a concrete Jellyfin user ID.
+
+    user_id, when set, is used as-is. Otherwise user_name is looked up via
+    GET /Users (case-insensitive) — this needs an admin-scoped API key, since
+    that's what Jellyfin requires to list every account.
+    """
+    if user_id:
+        return user_id
+
+    if not user_name:
+        raise FailedToLogin("Either a Jellyfin User ID or a Jellyfin user name must be configured")
+
+    users = await list_users(hass, ssl, api_key, host, port)
+    for user in users:
+        if user["name"].lower() == user_name.lower():
+            return user["id"]
+
+    raise FailedToLogin(
+        f"No Jellyfin account named '{user_name}' was found "
+        "(listing accounts requires an admin-scoped API key)"
+    )
+
+
 class JellyfinApi():
     def __init__(
         self,

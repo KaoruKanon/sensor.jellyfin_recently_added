@@ -15,12 +15,14 @@ Read through these two resources before posting issues to GitHub or the forums.
 3. Add the code for the card to your `ui-lovelace.yaml`.
 4. **You will need to restart after installation for the component to start working.**
 
-### Before you start: getting your Jellyfin API key and User ID
+### Before you start: getting your Jellyfin API key and User
 - **API key**: In Jellyfin, go to *Administration > Dashboard > Advanced > API Keys* and create a new key. This authenticates the request, it does not by itself say whose library/watch-state to read.
-- **User ID**: this identifies which Jellyfin account's library access and watch-state to use. It's required even when the API key belongs to an admin account: "recently added" respects per-user library access, and "continue watching" (`on_deck`) is inherently tied to one user's playback history — Jellyfin has no server-wide equivalent of either.
-  - **Via the UI (Option B below)**: no need to look it up — step 2 of the setup wizard shows a dropdown of every account on the server, as long as your API key belongs to an admin account (`GET /Users` requires admin rights to list everyone). If it doesn't, the dropdown is empty and you fall back to the manual entry below.
-  - **Manually (needed for Option A/YAML, or if the dropdown is empty)**: either open *Administration > Dashboard > Users*, select the account, and copy the `userId` value from the page URL, or query the API directly: `curl -H "X-Emby-Token: YOUR_API_KEY" http://jellyfin.local:8096/Users` — the response lists every account with its `Id`, and `Policy.IsAdministrator` / `Policy.EnableAllFolders` to help you spot the admin one.
-  - The User ID is not a secret, it's just an identifier, but you can still keep it in `secrets.yaml` alongside the API key if you'd rather have all the sensitive-looking values in one place.
+- **Which account**: this identifies which Jellyfin account's library access and watch-state to use. It's required even when the API key belongs to an admin account: "recently added" respects per-user library access, and "continue watching" (`on_deck`) is inherently tied to one user's playback history — Jellyfin has no server-wide equivalent of either. You can specify it either way:
+  - **By name** (`user_name`, e.g. `root`): the friendlier option, and the only one you'll need for `configuration.yaml`. Resolved to an ID automatically at setup — but this lookup uses `GET /Users`, which itself requires an admin-scoped API key to see every account, so it only works if your key belongs to an admin.
+  - **By ID** (`user_id`): works regardless of the API key's permission level.
+  - **Via the UI (Option B below)**: no need to pick between the two — step 2 of the setup wizard shows a dropdown of every account on the server (same admin-key requirement as above). If the dropdown comes up empty, it falls back to a manual `user_id` text field.
+  - **Finding the ID manually** (if you don't want to use `user_name`, or the dropdown is empty): either open *Administration > Dashboard > Users*, select the account, and copy the `userId` value from the page URL, or query the API directly: `curl -H "X-Emby-Token: YOUR_API_KEY" http://jellyfin.local:8096/Users` — the response lists every account with its `Id` and `Name`, plus `Policy.IsAdministrator` / `Policy.EnableAllFolders` to help you spot the admin one.
+  - Neither is a secret, they're just identifiers, but you can still keep them in `secrets.yaml` alongside the API key if you'd rather have all the sensitive-looking values in one place.
 
 ### Adding device
 You can set this integration up either through the UI, or through `configuration.yaml` — both work, and can be used interchangeably.
@@ -32,10 +34,9 @@ Add your API key (and any other value you'd rather not have in plain text) to `s
 ```yaml
 # secrets.yaml
 jellyfin_api_key: "0123456789abcdef0123456789abcdef"
-jellyfin_user_id: "0123456789abcdef0123456789abcdef"
 ```
 
-Then reference it from `configuration.yaml`:
+Then reference it from `configuration.yaml`, naming the account with `user_name` (or use `user_id` instead if you'd rather pin the exact ID — see [above](#before-you-start-getting-your-jellyfin-api-key-and-user)):
 
 ```yaml
 # configuration.yaml
@@ -44,7 +45,7 @@ jellyfin_recently_added:
     port: 8096
     ssl: false
     api_key: !secret jellyfin_api_key
-    user_id: !secret jellyfin_user_id
+    user_name: root      # or: user_id: 0123456789abcdef0123456789abcdef
     max: 5
     on_deck: false
     section_types:
@@ -64,7 +65,8 @@ Each item in the `jellyfin_recently_added:` list accepts the same values as the 
 | -------------------- | -------- | ------------- | ----------------------- | --------------------------------------------------------------------------------------------------------------- |
 | `host`               | Yes      | string        | —                        | Jellyfin server hostname or IP.                                                                                  |
 | `api_key`            | Yes      | string        | —                        | Jellyfin API key (*Dashboard > API Keys*).                                                                       |
-| `user_id`            | Yes      | string        | —                        | Jellyfin User ID whose library access and watch-state to use — see [above](#before-you-start-getting-your-jellyfin-api-key-and-user-id). |
+| `user_name`          | One of `user_name`/`user_id` | string | —              | Jellyfin account name (e.g. `root`) whose library access and watch-state to use — resolved to an ID at setup. Needs an admin-scoped API key to resolve. See [above](#before-you-start-getting-your-jellyfin-api-key-and-user). |
+| `user_id`            | One of `user_name`/`user_id` | string | —              | Same, but by ID instead of name — works with any API key. Takes priority if both are set.                        |
 | `port`               | No       | integer       | `8096`                   | Jellyfin server port.                                                                                            |
 | `ssl`                | No       | boolean       | `false`                  | Use `https` to reach the server.                                                                                 |
 | `name`               | No       | string        | `''`                     | Prefix added to entity names/`unique_id` — set this if you're configuring more than one Jellyfin server.        |

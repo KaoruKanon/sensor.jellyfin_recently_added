@@ -8,6 +8,7 @@ SIGN_URL_TTL_MINUTES: Final = 10080  # 7 days
 
 DEFAULT_NAME: Final = 'Jellyfin Recently Added'
 CONF_USER_ID: Final = 'user_id'
+CONF_USER_NAME: Final = 'user_name'
 CONF_MAX: Final = 'max'
 CONF_SECTION_TYPES: Final = 'section_types'
 ALL_SECTION_TYPES: Final = ["movies", "tvshows", "music", "photos"]
