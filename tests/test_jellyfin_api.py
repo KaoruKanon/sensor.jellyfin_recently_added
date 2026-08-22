@@ -10,7 +10,10 @@ from custom_components.jellyfin_recently_added.jellyfin_api import (
     FailedToLogin,
     list_users,
     resolve_user_id,
-    test_connection,
+    # Aliased: an unaliased `test_connection` import would be collected by
+    # pytest as a test itself (its name matches test_*), and fail since its
+    # real parameters (ssl, api_key, host, port) aren't fixtures.
+    test_connection as jf_test_connection,
 )
 
 
@@ -32,13 +35,13 @@ USERS_PAYLOAD = [
 
 async def test_connection_succeeds(fake_hass, requests_mock):
     requests_mock.get("http://jf.local:8096/System/Info", json={"Id": "server-1"})
-    await test_connection(fake_hass, False, "api-key", "jf.local", 8096)
+    await jf_test_connection(fake_hass, False, "api-key", "jf.local", 8096)
 
 
 async def test_connection_raises_on_http_error(fake_hass, requests_mock):
     requests_mock.get("http://jf.local:8096/System/Info", status_code=401)
     with pytest.raises(FailedToLogin):
-        await test_connection(fake_hass, False, "bad-key", "jf.local", 8096)
+        await jf_test_connection(fake_hass, False, "bad-key", "jf.local", 8096)
 
 
 async def test_list_users_returns_parsed_accounts(fake_hass, requests_mock):
