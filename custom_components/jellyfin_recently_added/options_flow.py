@@ -13,7 +13,7 @@ from homeassistant.helpers.selector import (
 )
 
 from .const import (
-    DOMAIN, 
+    DOMAIN,
     CONF_SECTION_TYPES,
     CONF_SECTION_LIBRARIES,
     ALL_SECTION_TYPES,
@@ -24,7 +24,7 @@ from .const import (
     )
 
 
-class PlexOptionFlow(OptionsFlow):
+class JellyfinOptionFlow(OptionsFlow):
     def __init__(self, config_entry: ConfigEntry) -> None:
         self._config_entry = config_entry
 
@@ -52,7 +52,7 @@ class PlexOptionFlow(OptionsFlow):
 
             return self.async_create_entry(title="", data=updated_data)
 
-        PLEX_SCHEMA = vol.Schema({
+        JELLYFIN_SCHEMA = vol.Schema({
             vol.Optional(CONF_MAX, default=self._config_entry.data[CONF_MAX]): vol.All(vol.Coerce(int), vol.Range(min=0)),
             vol.Optional(CONF_SECTION_TYPES, default=self._config_entry.data.get(CONF_SECTION_TYPES, [])): SelectSelector(SelectSelectorConfig(options=ALL_SECTION_TYPES ,multiple=True, mode=SelectSelectorMode.DROPDOWN)),
             vol.Optional(CONF_SECTION_LIBRARIES, default=self._config_entry.data.get(CONF_SECTION_LIBRARIES, [])): SelectSelector(SelectSelectorConfig(options=[str(item) for item in coordinator.data["libraries"]] ,multiple=True, mode=SelectSelectorMode.DROPDOWN)),
@@ -62,7 +62,7 @@ class PlexOptionFlow(OptionsFlow):
         })
 
         # Display a form to gather user input
-        return self.async_show_form(step_id="init", data_schema=PLEX_SCHEMA, errors=errors)
+        return self.async_show_form(step_id="init", data_schema=JELLYFIN_SCHEMA, errors=errors)
 
 def keys(d) -> list:
     return [i for i in d.keys()]
