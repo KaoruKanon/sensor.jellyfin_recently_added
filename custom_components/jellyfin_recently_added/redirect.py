@@ -37,7 +37,12 @@ class ImagesRedirect(HomeAssistantView):
         if tag and tag != "None":
             url += f'?tag={tag}'
 
-        fwd_headers = {"X-Emby-Token": self._api_key}
+        # Some Jellyfin server versions only honor the Authorization scheme,
+        # not the legacy X-Emby-Token header — send both (see jellyfin_api._auth_headers).
+        fwd_headers = {
+            "X-Emby-Token": self._api_key,
+            "Authorization": f'MediaBrowser Token="{self._api_key}"',
+        }
         if_modified = request.headers.get("If-Modified-Since")
         if_none = request.headers.get("If-None-Match")
         if if_modified:

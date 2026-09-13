@@ -12,13 +12,21 @@ from .tmdb_api import get_tmdb_trailer_url
 _LOGGER = logging.getLogger(__name__)
 
 
+def _auth_headers(api_key: str) -> dict:
+    """Jellyfin has accepted the API key two ways: the legacy X-Emby-Token
+    header, and Authorization: MediaBrowser Token="...". Some server versions
+    only honor the latter, so send both for compatibility across versions."""
+    return {
+        "X-Emby-Token": api_key,
+        "Authorization": f'MediaBrowser Token="{api_key}"',
+        "Accept": "application/json",
+    }
+
+
 def _get_json(url: str, api_key: str):
     response = requests.get(
         url,
-        headers={
-            "X-Emby-Token": api_key,
-            "Accept": "application/json",
-        },
+        headers=_auth_headers(api_key),
         timeout=REQUEST_TIMEOUT,
     )
     response.raise_for_status()

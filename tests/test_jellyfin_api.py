@@ -38,6 +38,18 @@ async def test_connection_succeeds(fake_hass, requests_mock):
     await jf_test_connection(fake_hass, False, "api-key", "jf.local", 8096)
 
 
+async def test_requests_send_both_auth_header_forms(fake_hass, requests_mock):
+    # Some Jellyfin server versions only honor the Authorization scheme, not
+    # the legacy X-Emby-Token header (see jellyfin_api._auth_headers) — a real
+    # server rejecting X-Emby-Token-only requests with 401 is what this guards against.
+    requests_mock.get("http://jf.local:8096/System/Info", json={"Id": "server-1"})
+    await jf_test_connection(fake_hass, False, "api-key", "jf.local", 8096)
+
+    sent_headers = requests_mock.last_request.headers
+    assert sent_headers["X-Emby-Token"] == "api-key"
+    assert sent_headers["Authorization"] == 'MediaBrowser Token="api-key"'
+
+
 async def test_connection_raises_on_http_error(fake_hass, requests_mock):
     requests_mock.get("http://jf.local:8096/System/Info", status_code=401)
     with pytest.raises(FailedToLogin):
