@@ -8,9 +8,9 @@ TMDB_DETAILS_URL = 'https://api.themoviedb.org/3/{media_type}/{tmdb_id}?api_key=
 EMPTY_TMDB_RESULT = {'trailer': None, 'tmdb_rating': None, 'tmdb_genres': None, 'tmdb_id': None}
 
 async def get_tmdb_trailer_url(hass, title, media_type):
-    if media_type == 'show':
+    if media_type == 'tvshows':
         media_type = 'tv'
-    elif media_type == 'movie':
+    elif media_type == 'movies':
         media_type = 'movie'
     else:
         return EMPTY_TMDB_RESULT.copy()

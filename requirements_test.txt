@@ -1,0 +1,5 @@
+# Test-only dependencies. Not pinned deliberately: pytest-homeassistant-custom-component
+# pins its own compatible pytest/homeassistant/pytest-asyncio versions internally —
+# let it dictate that triplet rather than fighting it here.
+pytest-homeassistant-custom-component
+requests-mock

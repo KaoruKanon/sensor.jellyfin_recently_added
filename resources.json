@@ -1,4 +1,4 @@
 [
-  "https://raw.githubusercontent.com/custom-components/sensor.plex_recently_added/master/custom_components/plex_recently_added/__init__.py",
-  "https://raw.githubusercontent.com/custom-components/sensor.plex_recently_added/master/custom_components/plex_recently_added/manifest.json"
+  "https://raw.githubusercontent.com/kaorukanon/sensor.jellyfin_recently_added/master/custom_components/jellyfin_recently_added/__init__.py",
+  "https://raw.githubusercontent.com/kaorukanon/sensor.jellyfin_recently_added/master/custom_components/jellyfin_recently_added/manifest.json"
 ]

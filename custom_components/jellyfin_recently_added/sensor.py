@@ -7,16 +7,16 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.components.sensor import SensorEntity
 
 from homeassistant.const import (
-    CONF_API_KEY, 
+    CONF_API_KEY,
     CONF_NAME,
     )
 
 from .const import (
-    DOMAIN, 
-    CONF_SECTION_TYPES, 
+    DOMAIN,
+    CONF_SECTION_TYPES,
     DEFAULT_PARSE_DICT
 )
-from .coordinator import PlexDataCoordinator
+from .coordinator import JellyfinDataCoordinator
 
 
 async def async_setup_entry(
@@ -24,17 +24,17 @@ async def async_setup_entry(
     config_entry: ConfigEntry,
     async_add_entities: Callable,
 ) -> None:
-    coordinator: PlexDataCoordinator = hass.data[DOMAIN][config_entry.entry_id]
+    coordinator: JellyfinDataCoordinator = hass.data[DOMAIN][config_entry.entry_id]
     section_types = config_entry.data[CONF_SECTION_TYPES]
 
-    async_add_entities([PlexRecentlyAddedSensor(coordinator, config_entry, type) for type in section_types] + [PlexRecentlyAddedSensor(coordinator, config_entry)])
+    async_add_entities([JellyfinRecentlyAddedSensor(coordinator, config_entry, type) for type in section_types] + [JellyfinRecentlyAddedSensor(coordinator, config_entry)])
 
 
-class PlexRecentlyAddedSensor(CoordinatorEntity[PlexDataCoordinator], SensorEntity):
-    def __init__(self, coordinator: PlexDataCoordinator, config_entry: ConfigEntry, type: str = ""):
+class JellyfinRecentlyAddedSensor(CoordinatorEntity[JellyfinDataCoordinator], SensorEntity):
+    def __init__(self, coordinator: JellyfinDataCoordinator, config_entry: ConfigEntry, type: str = ""):
         super().__init__(coordinator)
         self._coordinator = coordinator
-        self._name = f'{config_entry.data[CONF_NAME].capitalize() + " " if len(config_entry.data[CONF_NAME]) > 0 else ""}Plex Recently Added{ " " + type.capitalize() if len(type) > 0 else ""}'
+        self._name = f'{config_entry.data[CONF_NAME].capitalize() + " " if len(config_entry.data[CONF_NAME]) > 0 else ""}Jellyfin Recently Added{ " " + type.capitalize() if len(type) > 0 else ""}'
         self._api_key = config_entry.data[CONF_API_KEY]
         self._section_type = type
 
@@ -46,7 +46,7 @@ class PlexRecentlyAddedSensor(CoordinatorEntity[PlexDataCoordinator], SensorEnti
     @property
     def unique_id(self) -> str:
         """Return the unique ID of the sensor."""
-        return f'{self._api_key}_Plex_Recently_Added{"_" + self._section_type.capitalize() if len(self._section_type) > 0 else ""}'
+        return f'{self._api_key}_Jellyfin_Recently_Added{"_" + self._section_type.capitalize() if len(self._section_type) > 0 else ""}'
 
     @property
     def state(self) -> Optional[str]:
